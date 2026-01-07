@@ -78,6 +78,50 @@ mcp-server-git
 npm run start-managed
 ```
 
+## 编辑器集成
+
+### 多项目实例支持
+
+你可以在编辑器中配置多个 Git MCP 服务器实例，以便同时管理不同的仓库。通过设置 `REPO_NAME` 和 `TOOL_PREFIX`，可以隔离每个项目的工具名称和日志。
+
+#### Cursor 编辑器配置
+
+在项目根目录创建或更新 `.cursor/mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "git-web-app": {
+      "command": "npx",
+      "args": ["@liangshanli/mcp-server-git"],
+      "env": {
+        "PROJECT_PATH": "D:/projects/web-app",
+        "LOCAL_BRANCH": "main",
+        "REMOTE_BRANCH": "main",
+        "REPO_NAME": "web-app",
+        "TOOL_PREFIX": "web"
+      }
+    },
+    "git-api-service": {
+      "command": "npx",
+      "args": ["@liangshanli/mcp-server-git"],
+      "env": {
+        "PROJECT_PATH": "D:/projects/api-service",
+        "LOCAL_BRANCH": "develop",
+        "REMOTE_BRANCH": "develop",
+        "REPO_NAME": "api-service",
+        "TOOL_PREFIX": "api"
+      }
+    }
+  }
+}
+```
+
+**多实例集成的优势：**
+- **工具隔离**：每个实例都有带前缀的独立工具（例如：`web_git_push`, `api_git_push`）。
+- **日志隔离**：日志存储在不同的目录中（例如：`./.setting.web-app/`, `./.setting.api-service/`）。
+- **独立配置**：每个仓库可以配置不同的分支映射和项目路径。
+
 ### 3. MCP 工具
 
 服务器提供以下 MCP 工具：

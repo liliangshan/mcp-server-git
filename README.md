@@ -81,6 +81,50 @@ mcp-server-git
 npm run start-managed
 ```
 
+## Editor Integration
+
+### Multiple Project Instances Support
+
+You can configure multiple instances of the Git MCP server in your editor to manage different repositories simultaneously. Use `REPO_NAME` and `TOOL_PREFIX` to isolate the tools and logs for each project.
+
+#### Cursor Editor Configuration
+
+Create or update `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "git-web-app": {
+      "command": "npx",
+      "args": ["@liangshanli/mcp-server-git"],
+      "env": {
+        "PROJECT_PATH": "D:/projects/web-app",
+        "LOCAL_BRANCH": "main",
+        "REMOTE_BRANCH": "main",
+        "REPO_NAME": "web-app",
+        "TOOL_PREFIX": "web"
+      }
+    },
+    "git-api-service": {
+      "command": "npx",
+      "args": ["@liangshanli/mcp-server-git"],
+      "env": {
+        "PROJECT_PATH": "D:/projects/api-service",
+        "LOCAL_BRANCH": "develop",
+        "REMOTE_BRANCH": "develop",
+        "REPO_NAME": "api-service",
+        "TOOL_PREFIX": "api"
+      }
+    }
+  }
+}
+```
+
+**Benefits of Multiple Instances:**
+- **Tool Isolation**: Each instance has its own prefixed tools (e.g., `web_git_push`, `api_git_push`).
+- **Log Isolation**: Logs are stored in separate directories (e.g., `./.setting.web-app/`, `./.setting.api-service/`).
+- **Independent Config**: Different branches and paths for each repository.
+
 ### 3. MCP Tools
 
 The server provides the following MCP tools:
