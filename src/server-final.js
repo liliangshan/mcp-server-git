@@ -206,72 +206,8 @@ const clearPendingChanges = () => {
 // Load pending changes on startup
 loadPendingChanges();
 
-// Execute git push command
-const executeGitPush = async (message) => {
-  return new Promise((resolve, reject) => {
-    const command = 'git';
-    // Clean the message: remove or escape problematic characters
-    const cleanedMessage = message.replace(/"/g, "'");
+// Execute git push command is now handled by FinalMCPServer.executeGitCommand
 
-    // Parse git push flags from environment variable
-    const pushFlags = GIT_PUSH_FLAGS.trim() ? GIT_PUSH_FLAGS.trim().split(/\s+/) : [];
-
-    // Build git push command arguments
-    const args = ['push', REMOTE_NAME, `${LOCAL_BRANCH}:${REMOTE_BRANCH}`].concat(pushFlags);
-
-    console.error(`Executing: cd ${PROJECT_PATH} && ${command} ${args.map(arg => arg.includes(' ') ? `"${arg}"` : arg).join(' ')}`);
-
-    // Change to project directory and execute git command
-    const child = spawn(command, args, {
-      stdio: ['inherit', 'pipe', 'pipe'],
-      shell: false,
-      cwd: PROJECT_PATH
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      const output = data.toString();
-      stdout += output;
-      console.error(output);
-    });
-
-    child.stderr.on('data', (data) => {
-      const output = data.toString();
-      stderr += output;
-      console.error(output);
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve({
-          success: true,
-          stdout: stdout,
-          stderr: stderr,
-          exitCode: code
-        });
-      } else {
-        reject({
-          success: false,
-          stdout: stdout,
-          stderr: stderr,
-          exitCode: code,
-          error: `Command exited with code ${code}`
-        });
-      }
-    });
-
-    child.on('error', (err) => {
-      reject({
-        success: false,
-        error: err.message,
-        stdout: stdout,
-        stderr: stderr
-      });
-    });
-  });
-};
 
 // Final MCP Server
 class FinalMCPServer {
@@ -339,12 +275,27 @@ class FinalMCPServer {
       // Auto-add and commit changes before push
       console.error('Auto-adding and committing changes before push...');
 
-      // git add .
+      // Check if there are already staged changes
       try {
-        await this.executeGitCommand(['add', '.'], 'git_add_auto');
-        console.error('✓ Changes added to staging area');
-      } catch (addErr) {
-        console.error('Warning: git add failed, but continuing with push:', addErr.message);
+        const statusResult = await this.executeGitCommand(['status', '--porcelain'], 'git_status_check');
+        const hasStagedChanges = statusResult.stdout.split('\n').some(line => line.startsWith('A ') || line.startsWith('M ') || line.startsWith('D '));
+
+        if (!hasStagedChanges) {
+          // git add . only if no staged changes, with longer timeout for large repos
+          await this.executeGitCommand(['add', '.'], 'git_add_auto', 60000); // 60 second timeout
+          console.error('✓ Changes added to staging area');
+        } else {
+          console.error('✓ Staged changes already exist, skipping git add');
+        }
+      } catch (statusErr) {
+        console.error('Warning: git status check failed, proceeding with git add:', statusErr.message);
+        // If status check fails, still try to add
+        try {
+          await this.executeGitCommand(['add', '.'], 'git_add_auto');
+          console.error('✓ Changes added to staging area');
+        } catch (addErr) {
+          console.error('Warning: git add failed, but continuing with push:', addErr.message);
+        }
       }
 
       // git commit
@@ -360,7 +311,12 @@ class FinalMCPServer {
         }
       }
 
-      const result = await executeGitPush(message);
+      // Build git push command arguments
+      const pushFlags = GIT_PUSH_FLAGS.trim() ? GIT_PUSH_FLAGS.trim().split(/\s+/) : [];
+      const pushArgs = ['push', REMOTE_NAME, `${LOCAL_BRANCH}:${REMOTE_BRANCH}`].concat(pushFlags);
+      
+      // Execute push with a longer timeout (5 minutes)
+      const result = await this.executeGitCommand(pushArgs, 'git_push_final', 300000);
 
       // Log operation
       logRequest('git_push', {
@@ -657,7 +613,7 @@ class FinalMCPServer {
   }
 
   // Execute git command helper
-  async executeGitCommand(args, operation) {
+  async executeGitCommand(args, operation, timeout = 30000) { // 30 second default timeout
     return new Promise((resolve, reject) => {
       const command = 'git';
 
@@ -681,11 +637,18 @@ class FinalMCPServer {
       if (SOCKS_PROXY) env.socks_proxy = SOCKS_PROXY;
 
       const child = spawn(command, args, {
-        stdio: ['inherit', 'pipe', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe'],
         shell: false,
         cwd: PROJECT_PATH,
         env: env
       });
+
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        console.error(`Command timed out after ${timeout}ms: ${command} ${args.join(' ')}`);
+        child.kill('SIGTERM');
+        reject(new Error(`Command timed out after ${timeout}ms`));
+      }, timeout);
 
       let stdout = '';
       let stderr = '';
@@ -703,6 +666,7 @@ class FinalMCPServer {
       });
 
       child.on('close', (code) => {
+        clearTimeout(timeoutId); // Clear timeout on completion
         if (code === 0) {
           resolve({
             success: true,
@@ -722,6 +686,7 @@ class FinalMCPServer {
       });
 
       child.on('error', (err) => {
+        clearTimeout(timeoutId); // Clear timeout on error
         reject({
           success: false,
           error: err.message,
