@@ -4,11 +4,14 @@ A Model Context Protocol (MCP) server for executing git push operations with fle
 
 ## Features
 
-- Execute `git push` commands with configurable remote, source branch, and destination branch
+- Execute `git push` commands with flexible branch mapping and auto add/commit
+- Comprehensive Git operations: status, diff, add, log, push
 - Push history tracking and duplicate prevention
+- Pending changes review system with forced validation
 - Operation logging for debugging and monitoring
-- Support for multiple languages (English, Chinese)
+- Support for multiple languages (English, Chinese, Traditional Chinese)
 - Environment variable configuration for flexibility
+- Proxy support (HTTP, HTTPS, SOCKS5) for corporate networks
 
 ## Installation
 
