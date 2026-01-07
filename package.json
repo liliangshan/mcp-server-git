@@ -1,6 +1,6 @@
 {
   "name": "@liangshanli/mcp-server-git",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for git push operations with flexible branch mapping",
   "main": "bin/cli.js",
   "bin": {

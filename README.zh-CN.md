@@ -27,6 +27,7 @@ npm install -g @liangshanli/mcp-server-git
 
 ### 可选变量
 - `REMOTE_NAME`: 远程仓库名称（默认："origin"）
+- `PULL_SOURCE_BRANCH`: `git_pull` 的源分支（默认：与 `REMOTE_BRANCH` 相同）
 - `GIT_PUSH_FLAGS`: 额外的git push标志（默认："--progress"）
 - `TOOL_PREFIX`: MCP工具名称前缀（默认：""）
 - `REPO_NAME`: 仓库标识符，用于日志记录和标识
@@ -250,6 +251,20 @@ npm run start-managed
   }
 }
 ```
+
+#### `git_pull` (或 `<TOOL_PREFIX>_git_pull`)
+从配置的远程仓库和源分支执行 git pull 命令。
+
+**参数：** 无
+
+**示例：**
+```json
+{
+  "name": "git_pull"
+}
+```
+
+这将执行：`git pull <REMOTE_NAME> <PULL_SOURCE_BRANCH>`
 
 #### `save_changes` (或 `<TOOL_PREFIX>_save_changes`)
 在推送前保存待处理修改。记录修改的文件和修改内容以供推送前审查。

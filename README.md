@@ -30,6 +30,7 @@ The server requires the following environment variables:
 
 ### Optional
 - `REMOTE_NAME`: Remote name (default: "origin")
+- `PULL_SOURCE_BRANCH`: Source branch for `git_pull` (default: same as `REMOTE_BRANCH`)
 - `GIT_PUSH_FLAGS`: Additional git push flags (default: "--progress")
 - `TOOL_PREFIX`: Prefix for MCP tool names (default: "")
 - `REPO_NAME`: Repository identifier for logging and identification
@@ -253,6 +254,20 @@ Show commit history.
   }
 }
 ```
+
+#### `git_pull` (or `<TOOL_PREFIX>_git_pull`)
+Execute git pull command from the configured remote and source branch.
+
+**Parameters:** None
+
+**Example:**
+```json
+{
+  "name": "git_pull"
+}
+```
+
+This executes: `git pull <REMOTE_NAME> <PULL_SOURCE_BRANCH>`
 
 #### `save_changes` (or `<TOOL_PREFIX>_save_changes`)
 Save pending changes before pushing. Records modified files and change content for review.

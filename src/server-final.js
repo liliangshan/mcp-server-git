@@ -25,6 +25,7 @@ const PROJECT_PATH = process.env.PROJECT_PATH || '';
 const REMOTE_NAME = process.env.REMOTE_NAME || 'origin';
 const LOCAL_BRANCH = process.env.LOCAL_BRANCH || '';
 const REMOTE_BRANCH = process.env.REMOTE_BRANCH || '';
+const PULL_SOURCE_BRANCH = process.env.PULL_SOURCE_BRANCH || REMOTE_BRANCH;
 const GIT_PUSH_FLAGS = process.env.GIT_PUSH_FLAGS || '--progress';
 const TOOL_PREFIX = process.env.TOOL_PREFIX || '';
 const REPO_NAME = process.env.REPO_NAME || '';
@@ -215,6 +216,25 @@ class FinalMCPServer {
     this.name = 'mcp-git-server';
     this.version = '1.0.0';
     this.initialized = false;
+  }
+
+  // Execute git pull
+  async git_pull(params) {
+    try {
+      const args = ['pull', REMOTE_NAME, PULL_SOURCE_BRANCH];
+      const result = await this.executeGitCommand(args, 'git_pull');
+      
+      return {
+        success: true,
+        remote_name: REMOTE_NAME,
+        pull_source_branch: PULL_SOURCE_BRANCH,
+        output: result.stdout,
+        error_output: result.stderr,
+        message: `Successfully pulled from ${REMOTE_NAME}/${PULL_SOURCE_BRANCH}`
+      };
+    } catch (err) {
+      throw new Error(`Git pull failed: ${err.error || err.message}`);
+    }
   }
 
   // Execute git push
@@ -787,6 +807,16 @@ class FinalMCPServer {
           // Build tools array
           const tools = [
             {
+              name: getToolName('git_pull'),
+              description: getToolDescription(`Execute git pull command from "${REMOTE_NAME}/${PULL_SOURCE_BRANCH}" to the current branch.
+              
+Pull command: git pull ${REMOTE_NAME} ${PULL_SOURCE_BRANCH}`),
+              inputSchema: {
+                type: 'object',
+                properties: {}
+              }
+            },
+            {
               name: getToolName('git_push'),
               description: getToolDescription(`Execute git push command from "${LOCAL_BRANCH}" to "${REMOTE_NAME}/${REMOTE_BRANCH}" in project path "${PROJECT_PATH}".
 
@@ -999,6 +1029,7 @@ Examples:
               LOCAL_BRANCH: LOCAL_BRANCH,
               REMOTE_BRANCH: REMOTE_BRANCH,
               GIT_PUSH_FLAGS: GIT_PUSH_FLAGS,
+              PULL_SOURCE_BRANCH: PULL_SOURCE_BRANCH,
               TOOL_PREFIX: TOOL_PREFIX,
               REPO_NAME: REPO_NAME || '',
               LANGUAGE: LANGUAGE,
@@ -1271,6 +1302,7 @@ async function main() {
   console.error(`Remote Name: ${REMOTE_NAME}`);
   console.error(`Local Branch: ${LOCAL_BRANCH}`);
   console.error(`Remote Branch: ${REMOTE_BRANCH}`);
+  console.error(`Pull Source Branch: ${PULL_SOURCE_BRANCH}`);
   console.error(`Git Push Flags: ${GIT_PUSH_FLAGS}`);
   console.error(`Tool Prefix: ${TOOL_PREFIX || '(none)'}`);
   console.error(`Pending Changes: ${pendingChanges.length}`);
