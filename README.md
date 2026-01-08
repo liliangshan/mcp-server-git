@@ -126,6 +126,21 @@ Create or update `.cursor/mcp.json` in your project root:
 - **Log Isolation**: Logs are stored in separate directories (e.g., `./.setting.web-app/`, `./.setting.api-service/`).
 - **Independent Config**: Different branches and paths for each repository.
 
+## 💡 Best Practices and Usage Suggestions
+
+To fully leverage the power of MCP Git Server, it is recommended to follow these "strong constraint" instructions when collaborating with AI:
+
+1. **Atomic Recording (`save_changes`)**:
+   - **Instruction Suggestion**: "Please call the `save_changes` tool immediately after completing each independent small feature or bug fix. You need to clearly list the modified files and briefly describe your modification logic in one or two sentences. Strictly forbid accumulating a large number of changes without recording them."
+   - **Value**: This ensures that AI's memory fragments are solidified in real-time, preventing the loss of initial intent in subsequent complex refactors.
+
+2. **Modular Pushing (`git_push`)**:
+   - **Instruction Suggestion**: "When we have completed all development and self-testing for the current feature module, please push by calling `git_push`. Before pushing, you must first fully read and summarize all our saved records from this session via `get_pending_changes`, generating a clear, structured Commit Message that covers all changes."
+   - **Value**: Making "summarizing historical records" a statutory pre-step for pushing, completely eliminating "goldfish memory" commits.
+
+3. **Periodic Review**:
+   - If the session is extremely long (e.g., lasting several hours), you can occasionally ask the AI to call `get_pending_changes` for a mid-term summary to ensure the stored records perfectly match the current actual code state.
+
 ### 3. MCP Tools
 
 The server provides the following MCP tools:
